@@ -31,6 +31,7 @@ def get_translation_with_context(text, source_lang, target_lang, context="genera
         response = model.generate_content(prompt)
         
         response_text = response.text.strip()
+        print(f"Raw Gemini response: {response_text}")  # Added debug log
         if response_text.startswith('```json'):
             response_text = response_text[7:]
         if response_text.endswith('```'):
