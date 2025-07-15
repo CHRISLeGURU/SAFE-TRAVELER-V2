@@ -9,25 +9,17 @@ genai.configure(api_key=settings.GOOGLE_API_KEY)
 def get_translation_with_context(text, source_lang, target_lang, context="general"):
     """Get translation with cultural context from Gemini"""
     
-    prompt = f"""
-    A traveler heard this phrase: "{text}"
-    Source language: {source_lang}
-    Target language: {target_lang}
-    Context: {context}
-    
-    Please provide a JSON response with:
-    {{
-        "translation": "Accurate translation",
-        "cultural_context": "Brief cultural explanation if relevant",
-        "response_suggestion": "Suggested polite response",
-        "pronunciation_tip": "How to pronounce the response (phonetic)"
-    }}
-    
-    Make the response helpful for a traveler.
-    """
+    prompt = (
+        "You are a translation assistant specialized in African languages. "
+        f"Translate the following sentence from {source_lang} to {target_lang}: "
+        f"\"{text}\" "
+        "Please provide a JSON response with the following fields: "
+        "\"translation\", \"cultural_context\", \"response_suggestion\", \"pronunciation_tip\". "
+        "Make the response helpful for a traveler."
+    )
     
     try:
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel('models/gemini-2.5-flash')
         response = model.generate_content(prompt)
         
         response_text = response.text.strip()
