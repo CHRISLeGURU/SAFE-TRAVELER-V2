@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Safe Traveller{% endblock %}</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="{% url 'pwa_manifest' %}">
+    <meta name="theme-color" content="#0F172A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        .theme-transition {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .floating-action {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            z-index: 50;
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+        }
+        
+        .chat-popup {
+            position: fixed;
+            bottom: 160px;
+            right: 20px;
+            width: 320px;
+            max-height: 400px;
+            z-index: 60;
+            transform: scale(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .chat-popup.active {
+            transform: scale(1);
+        }
+        
+        .weather-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+    </style>
+</head>
+<body class="{% if user.theme == 'dark' %}dark bg-slate-900 text-white{% else %}bg-gray-50 text-gray-900{% endif %} theme-transition">
+    
+    <div class="min-h-screen pb-20">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- Bottom Navigation -->
+    {% if user.is_authenticated and request.resolver_match.url_name not in 'translate,chat,settings' %}
+    <nav class="bottom-nav bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 theme-transition">
+        <div class="flex justify-around items-center h-16">
+            <a href="{% url 'home' %}" class="flex flex-col items-center space-y-1 p-2 {% if request.resolver_match.url_name == 'home' %}text-primary-600{% else %}text-gray-600 dark:text-gray-400{% endif %}">
+                <i class="fas fa-home text-xl"></i>
+                <span class="text-xs">Home</span>
+            </a>
+            
+            <a href="{% url 'map' %}" class="flex flex-col items-center space-y-1 p-2 {% if request.resolver_match.url_name == 'map' %}text-primary-600{% else %}text-gray-600 dark:text-gray-400{% endif %}">
+                <i class="fas fa-map-marked-alt text-xl"></i>
+                <span class="text-xs">Map</span>
+            </a>
+            
+            <a href="{% url 'travel_list' %}" class="flex flex-col items-center space-y-1 p-2 bg-primary-600 text-white rounded-full -mt-4 shadow-lg">
+                <i class="fas fa-compass text-2xl"></i>
+                <span class="text-xs mt-1">Travel</span>
+            </a>
+            
+            <a href="{% url 'translate' %}" class="flex flex-col items-center space-y-1 p-2 {% if request.resolver_match.url_name == 'translate' %}text-primary-600{% else %}text-gray-600 dark:text-gray-400{% endif %}">
+                <i class="fas fa-language text-xl"></i>
+                <span class="text-xs">Translate</span>
+            </a>
+            
+            <a href="{% url 'profile' %}" class="flex flex-col items-center space-y-1 p-2 {% if request.resolver_match.url_name == 'profile' %}text-primary-600{% else %}text-gray-600 dark:text-gray-400{% endif %}">
+                <i class="fas fa-user text-xl"></i>
+                <span class="text-xs">Profile</span>
+            </a>
+        </div>
+    </nav>
+    {% endif %}
+    
+    <!-- Floating Chat Button -->
+    {% if user.is_authenticated and request.resolver_match.url_name not in 'chat,settings' %}
+    <button id="floating-chat" class="floating-action bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
+        <i class="fas fa-robot text-xl"></i>
+    </button>
+    {% endif %}
+    
+    <!-- Chat Popup -->
+    <div id="chat-popup" class="chat-popup bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-gray-200 dark:border-slate-700">
+        <div class="p-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+            <h3 class="font-semibold">Chat with AI</h3>
+            <button id="close-chat" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="chat-messages" class="h-64 overflow-y-auto p-4 space-y-2">
+            <!-- Chat messages will be inserted here -->
+        </div>
+        <div class="p-4 border-t border-gray-200 dark:border-slate-700">
+            <div class="flex space-x-2">
+                <input type="text" id="chat-input" placeholder="Type your message..." 
+                       class="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-slate-700">
+                <button id="send-chat" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Install PWA Button -->
+    <button id="install-btn" style="display:none;" class="fixed top-4 right-4 bg-primary-600 text-white px-4 py-2 rounded-lg shadow-lg">
+        📱 Install App
+    </button>
+    
+    <!-- Core JavaScript -->
+    <script>
+        // Theme management
+        function toggleTheme(theme) {
+            fetch('{% url "toggle_theme" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({theme: theme})
+            });
+            
+            if (theme === 'dark') {
+                document.body.classList.add('dark');
+            } else {
+                document.body.classList.remove('dark');
+            }
+        }
+        
+        // Chat functionality
+        const floatingChat = document.getElementById('floating-chat');
+        const chatPopup = document.getElementById('chat-popup');
+        const closeChat = document.getElementById('close-chat');
+        const chatInput = document.getElementById('chat-input');
+        const sendChat = document.getElementById('send-chat');
+        const chatMessages = document.getElementById('chat-messages');
+        
+        let chatSessionId = null;
+        
+        if (floatingChat) {
+            floatingChat.addEventListener('click', () => {
+                chatPopup.classList.add('active');
+            });
+        }
+        
+        if (closeChat) {
+            closeChat.addEventListener('click', () => {
+                chatPopup.classList.remove('active');
+            });
+        }
+        
+        // Close chat when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!chatPopup.contains(e.target) && !floatingChat.contains(e.target)) {
+                chatPopup.classList.remove('active');
+            }
+        });
+        
+        // Send chat message
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            // Add user message
+            addMessage(message, 'user');
+            chatInput.value = '';
+            
+            // Send to AI
+            fetch('{% url "text_chat" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    message: message,
+                    session_id: chatSessionId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    addMessage(data.response, 'ai');
+                    chatSessionId = data.session_id;
+                }
+            });
+        }
+        
+        function addMessage(text, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `p-2 rounded-lg max-w-xs ${type === 'user' ? 'bg-primary-600 text-white ml-auto' : 'bg-gray-200 dark:bg-slate-700'}`;
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        if (sendChat) {
+            sendChat.addEventListener('click', sendMessage);
+        }
+        
+        if (chatInput) {
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+        }
+        
+        // PWA Installation
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('install-btn');
+            if (installBtn) {
+                installBtn.style.display = 'block';
+                installBtn.addEventListener('click', () => {
+                    installBtn.style.display = 'none';
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        deferredPrompt = null;
+                    });
+                });
+            }
+        });
+        
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log('Service Worker registered'))
+                .catch((error) => console.log('Service Worker registration failed'));
+        }
+        
+        // Utility functions
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

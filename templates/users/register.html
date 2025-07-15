@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - Safe Traveller{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto min-h-screen flex items-center justify-center p-6">
+    <div class="w-full">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span class="text-white font-bold text-xl">ST</span>
+            </div>
+            <h1 class="text-2xl font-bold">Join Safe Traveller</h1>
+            <p class="text-gray-600 dark:text-gray-400">Start your safe travel journey</p>
+        </div>
+        
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium mb-1">Username</label>
+                {{ form.username }}
+            </div>
+            
+            <div>
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium mb-1">Email</label>
+                {{ form.email }}
+            </div>
+            
+            <div>
+                <label for="{{ form.nationality.id_for_label }}" class="block text-sm font-medium mb-1">Nationality (Optional)</label>
+                {{ form.nationality }}
+            </div>
+            
+            <div>
+                <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium mb-1">Password</label>
+                {{ form.password1 }}
+            </div>
+            
+            <div>
+                <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium mb-1">Confirm Password</label>
+                {{ form.password2 }}
+            </div>
+            
+            {% if form.errors %}
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <button type="submit" class="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors">
+                Create Account
+            </button>
+        </form>
+        
+        <div class="mt-6 text-center">
+            <p class="text-gray-600 dark:text-gray-400">
+                Already have an account? 
+                <a href="{% url 'login' %}" class="text-primary-600 font-medium hover:text-primary-700">
+                    Sign in
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+    input[type="text"], input[type="email"], input[type="password"] {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        background-color: transparent;
+    }
+    
+    .dark input {
+        border-color: #4b5563;
+        background-color: #374151;
+    }
+    
+    input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+</style>
+{% endblock %}

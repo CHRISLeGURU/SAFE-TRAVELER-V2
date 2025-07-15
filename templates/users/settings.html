@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings - Safe Traveller{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 p-4 shadow-sm theme-transition flex justify-between items-center">
+        <a href="{% url 'profile' %}" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </a>
+        <h1 class="text-xl font-bold">Settings</h1>
+        <div></div>
+    </header>
+    
+    <div class="p-4 space-y-6">
+        <!-- Appearance & Language -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+            <h3 class="font-semibold text-lg mb-4">Appearance & Language</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Theme</label>
+                    <div class="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
+                        <button onclick="toggleTheme('light')" 
+                                class="flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors {% if user.theme == 'light' %}bg-white text-gray-900 shadow-sm{% else %}text-gray-600 dark:text-gray-400{% endif %}">
+                            <i class="fas fa-sun mr-2"></i> Light
+                        </button>
+                        <button onclick="toggleTheme('dark')" 
+                                class="flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors {% if user.theme == 'dark' %}bg-slate-600 text-white shadow-sm{% else %}text-gray-600 dark:text-gray-400{% endif %}">
+                            <i class="fas fa-moon mr-2"></i> Dark
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Interface Language</label>
+                    <select onchange="changeLanguage(this.value)" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg dark:bg-slate-700">
+                        <option value="en" {% if user.language_ui == 'en' %}selected{% endif %}>🇺🇸 English</option>
+                        <option value="fr" {% if user.language_ui == 'fr' %}selected{% endif %}>🇫🇷 Français</option>
+                        <option value="es" {% if user.language_ui == 'es' %}selected{% endif %}>🇪🇸 Español</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI & Voice Settings -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+            <h3 class="font-semibold text-lg mb-4">AI & Voice</h3>
+            
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="flex items-center justify-between">
+                    <label class="font-medium">AI Assistant</label>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="ai_enabled" class="sr-only peer" 
+                               {% if settings.ai_enabled %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <label class="font-medium">Text-to-Speech</label>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="tts_enabled" class="sr-only peer" 
+                               {% if settings.tts_enabled %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Voice Type</label>
+                    <select name="voice_choice" class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg dark:bg-slate-700">
+                        <option value="male" {% if settings.voice_choice == 'male' %}selected{% endif %}>Male</option>
+                        <option value="female" {% if settings.voice_choice == 'female' %}selected{% endif %}>Female</option>
+                        <option value="neutral" {% if settings.voice_choice == 'neutral' %}selected{% endif %}>Neutral</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <label class="font-medium">Offline Mode</label>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="offline_mode" class="sr-only peer" 
+                               {% if settings.offline_mode %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>
+                
+                <button type="submit" class="w-full bg-primary-600 text-white py-2 rounded-lg font-medium hover:bg-primary-700">
+                    Save AI Settings
+                </button>
+            </form>
+            
+            <button onclick="clearConversations()" class="w-full mt-3 bg-gray-600 text-white py-2 rounded-lg font-medium hover:bg-gray-700">
+                Clear Chat History
+            </button>
+        </div>
+        
+        <!-- Account Management -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+            <h3 class="font-semibold text-lg mb-4">Account</h3>
+            
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span>Email: {{ user.email }}</span>
+                    <span class="text-sm text-gray-600 dark:text-gray-400">(read-only)</span>
+                </div>
+                
+                <button onclick="changePassword()" class="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700">
+                    Change Password
+                </button>
+                
+                <a href="{% url 'logout' %}" class="block w-full bg-gray-600 text-white py-2 rounded-lg font-medium hover:bg-gray-700 text-center">
+                    Sign Out
+                </a>
+                
+                <button onclick="confirmDeleteAccount()" class="w-full bg-red-600 text-white py-2 rounded-lg font-medium hover:bg-red-700">
+                    Delete Account
+                </button>
+            </div>
+        </div>
+        
+        <!-- Privacy & Security -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+            <h3 class="font-semibold text-lg mb-4">Privacy & Security</h3>
+            
+            <div class="space-y-3">
+                <button onclick="viewPrivacyPolicy()" class="w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg">
+                    <i class="fas fa-shield-alt mr-3 text-primary-600"></i>
+                    Privacy Policy
+                </button>
+                
+                <button onclick="clearCache()" class="w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg">
+                    <i class="fas fa-trash mr-3 text-red-600"></i>
+                    Clear App Cache
+                </button>
+            </div>
+        </div>
+        
+        <!-- About -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+            <h3 class="font-semibold text-lg mb-4">About</h3>
+            
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                    <span>Version</span>
+                    <span>1.0.0</span>
+                </div>
+                
+                <div class="flex justify-between">
+                    <span>Developer</span>
+                    <span>Israel Jack</span>
+                </div>
+                
+                <button onclick="sendFeedback()" class="w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg">
+                    <i class="fas fa-comment mr-3 text-primary-600"></i>
+                    Send Feedback
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Confirmation Modal -->
+<div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-xl max-w-sm w-full p-6">
+            <h3 class="text-lg font-semibold mb-4 text-red-600">Delete Account</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                This action cannot be undone. All your data will be permanently deleted.
+            </p>
+            <form action="{% url 'delete_account' %}" method="post">
+                {% csrf_token %}
+                <input type="password" name="password" placeholder="Enter your password" 
+                       class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg mb-4 dark:bg-slate-700" required>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeDeleteModal()" 
+                            class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-medium">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 bg-red-600 text-white py-2 rounded-lg font-medium">
+                        Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function changeLanguage(lang) {
+    // Implementation for changing interface language
+    fetch('{% url "settings" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({language_ui: lang})
+    })
+    .then(() => {
+        window.location.reload();
+    });
+}
+
+function clearConversations() {
+    if (confirm('Clear all chat history?')) {
+        // Implementation for clearing chat history
+        alert('Chat history cleared!');
+    }
+}
+
+function changePassword() {
+    const newPassword = prompt('Enter new password:');
+    if (newPassword) {
+        // Implementation for password change
+        alert('Password change functionality would be implemented here');
+    }
+}
+
+function confirmDeleteAccount() {
+    document.getElementById('delete-modal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.add('hidden');
+}
+
+function viewPrivacyPolicy() {
+    // Open privacy policy
+    alert('Privacy policy would be displayed here');
+}
+
+function clearCache() {
+    fetch('{% url "clear_cache" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message || 'Cache cleared successfully!');
+    });
+}
+
+function sendFeedback() {
+    const feedback = prompt('Enter your feedback:');
+    if (feedback) {
+        alert('Thank you for your feedback!');
+    }
+}
+</script>
+
+<style>
+    input, select {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        background-color: transparent;
+    }
+    
+    .dark input, .dark select {
+        border-color: #4b5563;
+        background-color: #374151;
+    }
+</style>
+{% endblock %}

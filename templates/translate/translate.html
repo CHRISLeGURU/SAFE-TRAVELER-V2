@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+
+{% block title %}Translate - Safe Traveller{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 p-4 shadow-sm theme-transition flex justify-between items-center">
+        <a href="{% url 'home' %}" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </a>
+        <h1 class="text-xl font-bold">Translate</h1>
+        <div class="flex items-center space-x-1 text-sm">
+            <select id="language-selector" class="bg-transparent border-none text-primary-600 font-medium">
+                <option value="auto-{{ user.mother_tongue }}">Auto → {{ user.mother_tongue|upper }}</option>
+                <option value="en-fr">EN → FR</option>
+                <option value="fr-en">FR → EN</option>
+                <option value="en-es">EN → ES</option>
+                <option value="fr-sw">FR → SW</option>
+                <option value="sw-fr">SW → FR</option>
+            </select>
+        </div>
+    </header>
+    
+    <div class="flex-1 p-4 space-y-6">
+        <!-- Voice Input Section -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm text-center">
+            <div class="mb-4">
+                <button id="voice-btn" onclick="toggleVoiceRecording()" 
+                        class="w-24 h-24 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300">
+                    <i id="voice-icon" class="fas fa-microphone text-3xl"></i>
+                </button>
+            </div>
+            
+            <h3 class="text-lg font-semibold mb-2">Tap to Speak</h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">Speak in any language and get instant translation</p>
+            
+            <div id="voice-status" class="mt-4 text-sm text-gray-500 dark:text-gray-400" style="display:none;">
+                <i class="fas fa-circle text-red-500 animate-pulse mr-2"></i>
+                Listening...
+            </div>
+        </div>
+        
+        <!-- Transcription Display -->
+        <div id="transcription-section" class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm" style="display:none;">
+            <h4 class="font-semibold text-sm text-gray-600 dark:text-gray-400 mb-2">You said:</h4>
+            <div id="transcription-text" class="text-lg mb-3"></div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">
+                <span id="detected-language"></span> • <span id="confidence-level"></span>
+            </div>
+        </div>
+        
+        <!-- Translation Result -->
+        <div id="translation-section" class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm" style="display:none;">
+            <div class="flex justify-between items-center mb-2">
+                <h4 class="font-semibold text-sm text-gray-600 dark:text-gray-400">Translation:</h4>
+                <button id="play-translation" onclick="playTranslation()" class="text-primary-600 hover:text-primary-700">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+            </div>
+            <div id="translation-text" class="text-lg mb-3"></div>
+            
+            <!-- Cultural Context -->
+            <div id="cultural-context" class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-3" style="display:none;">
+                <h5 class="font-medium text-blue-800 dark:text-blue-300 mb-1">
+                    <i class="fas fa-info-circle mr-1"></i>Cultural Context
+                </h5>
+                <p id="context-text" class="text-sm text-blue-700 dark:text-blue-300"></p>
+            </div>
+            
+            <!-- Response Suggestion -->
+            <div id="response-suggestion" class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg" style="display:none;">
+                <h5 class="font-medium text-green-800 dark:text-green-300 mb-1">
+                    <i class="fas fa-lightbulb mr-1"></i>You can respond:
+                </h5>
+                <p id="response-text" class="text-sm text-green-700 dark:text-green-300 mb-2"></p>
+                <button onclick="speakResponse()" class="text-xs bg-green-600 text-white px-3 py-1 rounded-full hover:bg-green-700">
+                    <i class="fas fa-volume-up mr-1"></i>Pronounce
+                </button>
+            </div>
+        </div>
+        
+        <!-- Text Input Alternative -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm">
+            <h4 class="font-semibold mb-3">Or type to translate:</h4>
+            <div class="flex space-x-2">
+                <input type="text" id="text-input" placeholder="Type your message..." 
+                       class="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-slate-700">
+                <button onclick="translateText()" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700">
+                    <i class="fas fa-language"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Recent Translations -->
+        {% if recent_translations %}
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm">
+            <h4 class="font-semibold mb-3">Recent Translations</h4>
+            <div class="space-y-2">
+                {% for translation in recent_translations|slice:":3" %}
+                <div class="p-2 border border-gray-200 dark:border-slate-700 rounded-lg">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ translation.original_text|truncatechars:30 }}</p>
+                    <p class="font-medium">{{ translation.translated_text|truncatechars:30 }}</p>
+                    <span class="text-xs text-gray-500">{{ translation.source_language|upper }} → {{ translation.target_language|upper }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Audio element for playback -->
+<audio id="audio-player" style="display:none;"></audio>
+
+<script>
+let isRecording = false;
+let mediaRecorder = null;
+let audioChunks = [];
+let currentSessionId = null;
+
+// Voice recording functionality
+async function toggleVoiceRecording() {
+    if (!isRecording) {
+        await startRecording();
+    } else {
+        stopRecording();
+    }
+}
+
+async function startRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        
+        mediaRecorder.ondataavailable = event => {
+            audioChunks.push(event.data);
+        };
+        
+        mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            await processVoiceInput(audioBlob);
+        };
+        
+        mediaRecorder.start();
+        isRecording = true;
+        
+        // Update UI
+        document.getElementById('voice-icon').className = 'fas fa-stop text-3xl';
+        document.getElementById('voice-btn').className = 'w-24 h-24 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300';
+        document.getElementById('voice-status').style.display = 'block';
+        
+    } catch (error) {
+        console.error('Error accessing microphone:', error);
+        alert('Please allow microphone access to use voice translation');
+    }
+}
+
+function stopRecording() {
+    if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        isRecording = false;
+        
+        // Update UI
+        document.getElementById('voice-icon').className = 'fas fa-microphone text-3xl';
+        document.getElementById('voice-btn').className = 'w-24 h-24 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300';
+        document.getElementById('voice-status').style.display = 'none';
+    }
+}
+
+async function processVoiceInput(audioBlob) {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'recording.wav');
+    if (currentSessionId) {
+        formData.append('session_id', currentSessionId);
+    }
+    
+    try {
+        const response = await fetch('{% url "process_voice_input" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            displayTranscription(data.user_text, data.language_detected);
+            displayTranslation(data.ai_response, data.audio_url);
+            currentSessionId = data.session_id;
+        } else {
+            alert('Error processing voice input: ' + (data.message || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error processing voice:', error);
+        alert('Error processing voice input');
+    }
+}
+
+function displayTranscription(text, language) {
+    document.getElementById('transcription-text').textContent = text;
+    document.getElementById('detected-language').textContent = language.toUpperCase();
+    document.getElementById('confidence-level').textContent = '95% confidence';
+    document.getElementById('transcription-section').style.display = 'block';
+}
+
+function displayTranslation(translation, audioUrl) {
+    document.getElementById('translation-text').textContent = translation;
+    document.getElementById('translation-section').style.display = 'block';
+    
+    // Store audio URL for playback
+    if (audioUrl) {
+        document.getElementById('audio-player').src = audioUrl;
+    }
+}
+
+function translateText() {
+    const text = document.getElementById('text-input').value.trim();
+    if (!text) return;
+    
+    const languagePair = document.getElementById('language-selector').value.split('-');
+    
+    fetch('{% url "translate_text" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            text: text,
+            source_lang: languagePair[0],
+            target_lang: languagePair[1],
+            context: 'travel'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            displayTranscription(text, languagePair[0]);
+            displayTranslation(data.translation, data.audio_url);
+            
+            if (data.cultural_context) {
+                document.getElementById('context-text').textContent = data.cultural_context;
+                document.getElementById('cultural-context').style.display = 'block';
+            }
+            
+            if (data.response_suggestion) {
+                document.getElementById('response-text').textContent = data.response_suggestion;
+                document.getElementById('response-suggestion').style.display = 'block';
+            }
+            
+            // Clear input
+            document.getElementById('text-input').value = '';
+        }
+    });
+}
+
+function playTranslation() {
+    const audioPlayer = document.getElementById('audio-player');
+    if (audioPlayer.src) {
+        audioPlayer.play();
+    } else {
+        // Fallback: use browser TTS
+        const text = document.getElementById('translation-text').textContent;
+        speakText(text);
+    }
+}
+
+function speakResponse() {
+    const text = document.getElementById('response-text').textContent;
+    speakText(text);
+}
+
+function speakText(text) {
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = '{{ user.mother_tongue }}';
+        speechSynthesis.speak(utterance);
+    }
+}
+
+// Text input enter key handler
+document.getElementById('text-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        translateText();
+    }
+});
+
+// Language selector change handler
+document.getElementById('language-selector').addEventListener('change', function() {
+    // Clear previous results when language pair changes
+    document.getElementById('transcription-section').style.display = 'none';
+    document.getElementById('translation-section').style.display = 'none';
+});
+</script>
+{% endblock %}

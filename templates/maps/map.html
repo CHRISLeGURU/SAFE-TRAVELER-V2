@@ -1,0 +1,388 @@
+{% extends 'base.html' %}
+
+{% block title %}Map - Safe Traveller{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto h-screen flex flex-col">
+    <!-- Search Bar -->
+    <div class="relative z-10 p-4">
+        <div class="flex items-center space-x-2 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-2">
+            <i class="fas fa-search text-gray-400 ml-2"></i>
+            <input type="text" id="search-input" placeholder="Search places..." 
+                   class="flex-1 px-3 py-2 bg-transparent border-none focus:outline-none">
+            <button onclick="getCurrentLocation()" class="p-2 text-primary-600 hover:bg-gray-100 dark:hover:bg-slate-700 rounded">
+                <i class="fas fa-location-arrow"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Map Container -->
+    <div class="flex-1 relative">
+        <div id="map" class="w-full h-full"></div>
+        
+        <!-- Map Controls -->
+        <div class="absolute bottom-4 right-4 flex flex-col space-y-2">
+            <button id="recenter-btn" onclick="recenterMap()" 
+                    class="bg-white dark:bg-slate-800 p-3 rounded-full shadow-lg hover:shadow-xl transition-shadow">
+                <i class="fas fa-crosshairs text-primary-600"></i>
+            </button>
+            
+            <button id="route-btn" onclick="startRoute()" style="display:none;"
+                    class="bg-primary-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl transition-shadow">
+                <i class="fas fa-route"></i>
+            </button>
+            
+            <button id="view-toggle" onclick="toggleMapView()" 
+                    class="bg-white dark:bg-slate-800 p-3 rounded-full shadow-lg hover:shadow-xl transition-shadow">
+                <i class="fas fa-satellite text-primary-600"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Search Results -->
+    <div id="search-results" class="absolute top-20 left-4 right-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg max-h-64 overflow-y-auto z-20" style="display:none;">
+        <!-- Results will be populated here -->
+    </div>
+    
+    <!-- Place Details Modal -->
+    <div id="place-modal" class="fixed inset-x-0 bottom-0 bg-white dark:bg-slate-800 rounded-t-xl shadow-2xl transform translate-y-full transition-transform duration-300 z-30">
+        <div class="p-4">
+            <div class="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+            <div id="place-content">
+                <!-- Place details will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet CSS and JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+let map;
+let userLocation = null;
+let selectedPlace = null;
+let currentMarker = null;
+let userMarker = null;
+let isRouteMode = false;
+let mapView = 'normal'; // 'normal' or 'satellite'
+
+// Initialize map
+function initMap() {
+    map = L.map('map').setView([0, 0], 2);
+    
+    // Default tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Get user location
+    getCurrentLocation();
+    
+    // Map click handler
+    map.on('click', function(e) {
+        addMarker(e.latlng);
+        document.getElementById('route-btn').style.display = 'block';
+    });
+}
+
+function getCurrentLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                
+                // Center map on user location
+                map.setView([userLocation.lat, userLocation.lng], 15);
+                
+                // Add user marker
+                if (userMarker) {
+                    map.removeLayer(userMarker);
+                }
+                
+                const userIcon = L.divIcon({
+                    className: 'user-marker',
+                    html: '<div style="background: #3b82f6; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                });
+                
+                userMarker = L.marker([userLocation.lat, userLocation.lng], {icon: userIcon})
+                    .addTo(map)
+                    .bindPopup('You are here');
+            },
+            function(error) {
+                console.error('Error getting location:', error);
+                // Default to a major city if location fails
+                map.setView([6.1319, 1.2228], 10); // Lome, Togo
+            }
+        );
+    }
+}
+
+function addMarker(latlng) {
+    // Remove previous marker
+    if (currentMarker) {
+        map.removeLayer(currentMarker);
+    }
+    
+    // Add new marker
+    currentMarker = L.marker([latlng.lat, latlng.lng])
+        .addTo(map)
+        .bindPopup('Selected location')
+        .openPopup();
+    
+    selectedPlace = {
+        lat: latlng.lat,
+        lng: latlng.lng,
+        name: 'Selected Location'
+    };
+}
+
+function recenterMap() {
+    if (userLocation) {
+        map.setView([userLocation.lat, userLocation.lng], 15);
+    }
+}
+
+function startRoute() {
+    if (!userLocation || !selectedPlace) {
+        alert('Please select a destination and ensure location is available');
+        return;
+    }
+    
+    // Simple route line (in production, use a routing service)
+    const routeLine = L.polyline([
+        [userLocation.lat, userLocation.lng],
+        [selectedPlace.lat, selectedPlace.lng]
+    ], {
+        color: '#3b82f6',
+        weight: 4,
+        opacity: 0.7
+    }).addTo(map);
+    
+    // Fit map to show entire route
+    map.fitBounds(routeLine.getBounds());
+    
+    // Show route info
+    showPlaceDetails({
+        name: 'Route to ' + selectedPlace.name,
+        distance: calculateDistance(userLocation, selectedPlace),
+        duration: 'Calculating...'
+    });
+}
+
+function toggleMapView() {
+    const toggleBtn = document.getElementById('view-toggle');
+    
+    if (mapView === 'normal') {
+        // Switch to satellite view
+        map.eachLayer(function(layer) {
+            if (layer instanceof L.TileLayer) {
+                map.removeLayer(layer);
+            }
+        });
+        
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri'
+        }).addTo(map);
+        
+        toggleBtn.innerHTML = '<i class="fas fa-map text-primary-600"></i>';
+        mapView = 'satellite';
+    } else {
+        // Switch to normal view
+        map.eachLayer(function(layer) {
+            if (layer instanceof L.TileLayer) {
+                map.removeLayer(layer);
+            }
+        });
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        toggleBtn.innerHTML = '<i class="fas fa-satellite text-primary-600"></i>';
+        mapView = 'normal';
+    }
+}
+
+function searchPlaces() {
+    const query = document.getElementById('search-input').value.trim();
+    if (!query) return;
+    
+    // Mock search results (in production, use a places API)
+    const mockResults = [
+        {name: 'Restaurant near ' + query, type: 'restaurant', distance: '0.3 km'},
+        {name: 'Hotel ' + query, type: 'hotel', distance: '0.8 km'},
+        {name: 'Market ' + query, type: 'market', distance: '1.2 km'}
+    ];
+    
+    showSearchResults(mockResults);
+}
+
+function showSearchResults(results) {
+    const resultsDiv = document.getElementById('search-results');
+    resultsDiv.innerHTML = '';
+    
+    results.forEach(result => {
+        const resultItem = document.createElement('div');
+        resultItem.className = 'p-3 border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer';
+        resultItem.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-${getIconForType(result.type)} text-primary-600"></i>
+                <div class="flex-1">
+                    <p class="font-medium">${result.name}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">${result.distance}</p>
+                </div>
+            </div>
+        `;
+        resultItem.onclick = () => selectSearchResult(result);
+        resultsDiv.appendChild(resultItem);
+    });
+    
+    resultsDiv.style.display = 'block';
+}
+
+function selectSearchResult(result) {
+    document.getElementById('search-results').style.display = 'none';
+    document.getElementById('search-input').value = result.name;
+    
+    // Add marker for selected result (mock coordinates)
+    if (userLocation) {
+        const lat = userLocation.lat + (Math.random() - 0.5) * 0.01;
+        const lng = userLocation.lng + (Math.random() - 0.5) * 0.01;
+        addMarker({lat, lng});
+    }
+    
+    showPlaceDetails(result);
+}
+
+function showPlaceDetails(place) {
+    const modal = document.getElementById('place-modal');
+    const content = document.getElementById('place-content');
+    
+    content.innerHTML = `
+        <h3 class="text-lg font-semibold mb-2">${place.name}</h3>
+        <div class="space-y-2 text-sm">
+            ${place.distance ? `<p><i class="fas fa-map-marker-alt text-gray-400 mr-2"></i>${place.distance}</p>` : ''}
+            ${place.duration ? `<p><i class="fas fa-clock text-gray-400 mr-2"></i>${place.duration}</p>` : ''}
+            ${place.type ? `<p><i class="fas fa-tag text-gray-400 mr-2"></i>${place.type}</p>` : ''}
+        </div>
+        <div class="flex space-x-2 mt-4">
+            <button onclick="startRoute()" class="flex-1 bg-primary-600 text-white py-2 rounded-lg font-medium">
+                <i class="fas fa-route mr-2"></i>Directions
+            </button>
+            <button onclick="savePlace()" class="px-4 py-2 border border-primary-600 text-primary-600 rounded-lg font-medium">
+                <i class="fas fa-bookmark"></i>
+            </button>
+        </div>
+    `;
+    
+    modal.style.transform = 'translateY(0)';
+}
+
+function hidePlaceDetails() {
+    document.getElementById('place-modal').style.transform = 'translateY(100%)';
+}
+
+function savePlace() {
+    if (!selectedPlace) return;
+    
+    fetch('{% url "save_place" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            name: selectedPlace.name,
+            lat: selectedPlace.lat,
+            lng: selectedPlace.lng,
+            category: 'saved'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('Place saved successfully!');
+        }
+    });
+}
+
+function getIconForType(type) {
+    const icons = {
+        restaurant: 'utensils',
+        hotel: 'bed',
+        market: 'shopping-cart',
+        hospital: 'hospital',
+        gas_station: 'gas-pump',
+        default: 'map-marker-alt'
+    };
+    return icons[type] || icons.default;
+}
+
+function calculateDistance(pos1, pos2) {
+    const R = 6371; // Earth's radius in km
+    const dLat = (pos2.lat - pos1.lat) * Math.PI / 180;
+    const dLng = (pos2.lng - pos1.lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(pos1.lat * Math.PI / 180) * Math.cos(pos2.lat * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+    return distance < 1 ? (distance * 1000).toFixed(0) + ' m' : distance.toFixed(1) + ' km';
+}
+
+// Event listeners
+document.getElementById('search-input').addEventListener('input', function(e) {
+    if (e.target.value.length > 2) {
+        searchPlaces();
+    } else {
+        document.getElementById('search-results').style.display = 'none';
+    }
+});
+
+document.getElementById('search-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchPlaces();
+    }
+});
+
+// Click outside to hide results
+document.addEventListener('click', function(e) {
+    if (!document.getElementById('search-results').contains(e.target) && 
+        !document.getElementById('search-input').contains(e.target)) {
+        document.getElementById('search-results').style.display = 'none';
+    }
+});
+
+// Click outside modal to hide
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('place-modal');
+    if (e.target === modal) {
+        hidePlaceDetails();
+    }
+});
+
+// Initialize map when page loads
+document.addEventListener('DOMContentLoaded', initMap);
+</script>
+
+<style>
+#map {
+    z-index: 1;
+}
+
+.user-marker {
+    background: transparent;
+}
+
+#place-modal {
+    z-index: 1000;
+}
+</style>
+{% endblock %}

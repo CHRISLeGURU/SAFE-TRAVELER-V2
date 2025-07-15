@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}New Travel - Safe Traveller{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 p-4 shadow-sm theme-transition flex justify-between items-center">
+        <a href="{% url 'travel_list' %}" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </a>
+        <h1 class="text-xl font-bold">New Travel</h1>
+        <div></div>
+    </header>
+    
+    <div class="p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-compass text-white text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-bold mb-2">Plan Your Journey</h2>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">Tell us about your travel plans to get personalized guidance</p>
+            </div>
+            
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium mb-2">Travel Name *</label>
+                    {{ form.name }}
+                    <p class="text-xs text-gray-500 mt-1">Give your trip a memorable name</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.country.id_for_label }}" class="block text-sm font-medium mb-2">Country *</label>
+                        {{ form.country }}
+                    </div>
+                    <div>
+                        <label for="{{ form.city.id_for_label }}" class="block text-sm font-medium mb-2">City *</label>
+                        {{ form.city }}
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="{{ form.travel_type.id_for_label }}" class="block text-sm font-medium mb-2">Travel Type *</label>
+                    {{ form.travel_type }}
+                    <p class="text-xs text-gray-500 mt-1">This helps us provide relevant cultural advice</p>
+                </div>
+                
+                <div>
+                    <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium mb-2">Start Date *</label>
+                    {{ form.start_date }}
+                </div>
+                
+                <div>
+                    <label for="{{ form.residence.id_for_label }}" class="block text-sm font-medium mb-2">Accommodation</label>
+                    {{ form.residence }}
+                    <p class="text-xs text-gray-500 mt-1">Hotel, Airbnb, friend's place, etc.</p>
+                </div>
+                
+                <div>
+                    <label for="{{ form.objectives.id_for_label }}" class="block text-sm font-medium mb-2">Travel Objectives</label>
+                    {{ form.objectives }}
+                    <p class="text-xs text-gray-500 mt-1">What do you hope to achieve or experience?</p>
+                </div>
+                
+                {% if form.errors %}
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <p class="text-sm">{{ error }}</p>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors">
+                        <i class="fas fa-rocket mr-2"></i>
+                        Create Travel Plan
+                    </button>
+                </div>
+                
+                <div class="text-center">
+                    <p class="text-xs text-gray-500">
+                        We'll generate personalized cultural advice and safety tips for your destination
+                    </p>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Travel Tips -->
+        <div class="mt-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+            <h3 class="font-semibold text-blue-900 dark:text-blue-300 mb-2">
+                <i class="fas fa-lightbulb mr-2"></i>
+                Travel Tips
+            </h3>
+            <ul class="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+                <li>• Choose descriptive names for easy identification</li>
+                <li>• Select the correct travel type for better AI advice</li>
+                <li>• Add specific objectives to get targeted recommendations</li>
+                <li>• You can always edit details later</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

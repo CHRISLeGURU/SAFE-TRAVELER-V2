@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Travels - Safe Traveller{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 p-4 shadow-sm theme-transition">
+        <h1 class="text-xl font-bold text-center">My Travels</h1>
+    </header>
+    
+    <div class="p-4 space-y-6">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-xl">
+                <h3 class="text-sm opacity-90">Total Travels</h3>
+                <p class="text-2xl font-bold">{{ total_travels }}</p>
+            </div>
+            
+            {% if active_travel %}
+            <div class="bg-gradient-to-r from-green-500 to-teal-600 text-white p-4 rounded-xl">
+                <h3 class="text-sm opacity-90">Current Trip</h3>
+                <p class="font-semibold">{{ active_travel.name }}</p>
+                <p class="text-sm opacity-90">{{ active_travel.city }}, {{ active_travel.country }}</p>
+                <p class="text-xs opacity-75">{{ active_travel.days_elapsed }} days</p>
+            </div>
+            {% else %}
+            <div class="bg-gray-400 text-white p-4 rounded-xl">
+                <h3 class="text-sm opacity-90">Current Trip</h3>
+                <p class="text-lg">No active travel</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Start New Travel -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm">
+            <a href="{% url 'travel_new' %}" class="flex items-center justify-center space-x-2 bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors">
+                <i class="fas fa-plus"></i>
+                <span>Start New Travel</span>
+            </a>
+        </div>
+        
+        <!-- Travel List -->
+        {% if travels %}
+        <div class="space-y-4">
+            <h3 class="font-semibold text-lg">Your Travels</h3>
+            
+            {% for travel in travels %}
+            <div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-lg">{{ travel.name }}</h4>
+                        <p class="text-gray-600 dark:text-gray-400">{{ travel.city }}, {{ travel.country }}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-500">{{ travel.get_travel_type_display }}</p>
+                    </div>
+                    
+                    {% if travel.is_active %}
+                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                        Active
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    <span>Started: {{ travel.start_date|date:"M d, Y" }}</span>
+                    <span>{{ travel.days_elapsed }} days ago</span>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <a href="{% url 'travel_detail' travel.id %}" 
+                       class="flex-1 bg-primary-600 text-white py-2 rounded-lg text-center font-medium hover:bg-primary-700">
+                        View Details
+                    </a>
+                    
+                    {% if not travel.is_active %}
+                    <button onclick="setActiveTravel({{ travel.id }})" 
+                            class="px-4 py-2 border border-primary-600 text-primary-600 rounded-lg font-medium hover:bg-primary-50 dark:hover:bg-primary-900/20">
+                        Activate
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-8">
+            <i class="fas fa-suitcase text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+            <h3 class="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">No travels yet</h3>
+            <p class="text-gray-500 dark:text-gray-500 mb-4">Start your first travel to get personalized advice and guidance</p>
+            <a href="{% url 'travel_new' %}" class="bg-primary-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-700">
+                Plan Your First Trip
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function setActiveTravel(travelId) {
+    fetch('{% url "set_active_travel" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({travel_id: travelId})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            window.location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}

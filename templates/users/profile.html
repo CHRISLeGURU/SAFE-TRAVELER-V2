@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - Safe Traveller{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 p-4 shadow-sm theme-transition flex justify-between items-center">
+        <a href="{% url 'home' %}" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </a>
+        <h1 class="text-xl font-bold">Profile</h1>
+        <a href="{% url 'settings' %}" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+            <i class="fas fa-cog text-xl"></i>
+        </a>
+    </header>
+    
+    <div class="p-4 space-y-6">
+        <!-- Profile Picture & Name -->
+        <div class="text-center">
+            {% if user.photo %}
+                <img src="{{ user.photo.url }}" alt="Profile" class="w-24 h-24 rounded-full mx-auto mb-4 object-cover">
+            {% else %}
+                <div class="w-24 h-24 bg-gray-300 dark:bg-slate-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <i class="fas fa-user text-gray-600 dark:text-gray-300 text-3xl"></i>
+                </div>
+            {% endif %}
+            <h2 class="text-xl font-bold">{{ user.get_full_name|default:user.username }}</h2>
+            <p class="text-gray-600 dark:text-gray-400">{{ user.email }}</p>
+        </div>
+        
+        <!-- Quick Theme Toggle -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+            <div class="flex justify-between items-center">
+                <span class="font-medium">Theme</span>
+                <div class="flex bg-gray-200 dark:bg-slate-700 rounded-lg p-1">
+                    <button onclick="toggleTheme('light')" 
+                            class="px-3 py-1 rounded-md text-sm font-medium transition-colors {% if user.theme == 'light' %}bg-white text-gray-900 shadow-sm{% else %}text-gray-600 dark:text-gray-400{% endif %}">
+                        <i class="fas fa-sun mr-1"></i> Light
+                    </button>
+                    <button onclick="toggleTheme('dark')" 
+                            class="px-3 py-1 rounded-md text-sm font-medium transition-colors {% if user.theme == 'dark' %}bg-slate-600 text-white shadow-sm{% else %}text-gray-600 dark:text-gray-400{% endif %}">
+                        <i class="fas fa-moon mr-1"></i> Dark
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Personal Information -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+            <h3 class="font-semibold text-lg mb-4">Personal Information</h3>
+            
+            <form method="post" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">Profile Photo</label>
+                    {{ form.photo }}
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">First Name</label>
+                        {{ form.first_name }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Last Name</label>
+                        {{ form.last_name }}
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">Email</label>
+                    {{ form.email }}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">Nationality</label>
+                    {{ form.nationality }}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">Current City</label>
+                    {{ form.city }}
+                </div>
+                
+                <button type="submit" class="w-full bg-primary-600 text-white py-2 rounded-lg font-medium hover:bg-primary-700">
+                    Update Profile
+                </button>
+            </form>
+        </div>
+        
+        <!-- Cultural Preferences -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+            <h3 class="font-semibold text-lg mb-4">Cultural Preferences</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Mother Tongue</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg dark:bg-slate-700">
+                        <option value="en" {% if user.mother_tongue == 'en' %}selected{% endif %}>English</option>
+                        <option value="fr" {% if user.mother_tongue == 'fr' %}selected{% endif %}>French</option>
+                        <option value="es" {% if user.mother_tongue == 'es' %}selected{% endif %}>Spanish</option>
+                        <option value="sw" {% if user.mother_tongue == 'sw' %}selected{% endif %}>Swahili</option>
+                        <option value="ar" {% if user.mother_tongue == 'ar' %}selected{% endif %}>Arabic</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">Learning Language</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg dark:bg-slate-700">
+                        <option value="">Select a language</option>
+                        <option value="en">English</option>
+                        <option value="fr">French</option>
+                        <option value="es">Spanish</option>
+                        <option value="sw">Swahili</option>
+                        <option value="ar">Arabic</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">Religion</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg dark:bg-slate-700">
+                        <option value="">Prefer not to say</option>
+                        <option value="christian">Christian</option>
+                        <option value="muslim">Muslim</option>
+                        <option value="jewish">Jewish</option>
+                        <option value="hindu">Hindu</option>
+                        <option value="buddhist">Buddhist</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-1">Cultural Sensitivity Level</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg dark:bg-slate-700">
+                        <option value="low">Low - Basic tips</option>
+                        <option value="medium" selected>Medium - Regular guidance</option>
+                        <option value="high">High - Detailed cultural advice</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Current Travel -->
+        {% if current_travel %}
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+            <h3 class="font-semibold text-lg mb-4">Current Travel</h3>
+            
+            <div class="flex items-center justify-between">
+                <div>
+                    <h4 class="font-medium">{{ current_travel.name }}</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ current_travel.city }}, {{ current_travel.country }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{{ current_travel.days_elapsed }} days ago</p>
+                </div>
+                <a href="{% url 'travel_detail' current_travel.id %}" class="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    View Details
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Quick Stats -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+            <h3 class="font-semibold text-lg mb-4">Quick Stats</h3>
+            
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div>
+                    <p class="text-2xl font-bold text-primary-600">{{ user.travel_set.count }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Travels</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-green-600">{{ user.translationhistory_set.count }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Translations</p>
+                </div>
+                <div>
+                    <p class="text-2xl font-bold text-purple-600">{{ user.searchhistory_set.count }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Searches</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    input, select, input[type="file"] {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        background-color: transparent;
+    }
+    
+    .dark input, .dark select {
+        border-color: #4b5563;
+        background-color: #374151;
+    }
+    
+    input:focus, select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+</style>
+{% endblock %}

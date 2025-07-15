@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome - Safe Traveller{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto min-h-screen flex flex-col">
+    <!-- Hero Section -->
+    <div class="flex-1 flex items-center justify-center p-6">
+        <div class="text-center">
+            <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="text-white font-bold text-3xl">ST</span>
+
+            </div>
+            
+            <h1 class="text-3xl font-bold mb-4">Safe Traveller</h1>
+            <p class="text-gray-600 dark:text-gray-400 text-lg mb-8">
+                Your intelligent companion for safe and culturally-aware travel
+            </p>
+            
+            <div class="space-y-4 mb-8">
+                <div class="flex items-center space-x-3 text-left">
+                    <i class="fas fa-language text-primary-600 text-xl"></i>
+                    <span>Real-time voice translation</span>
+                </div>
+                <div class="flex items-center space-x-3 text-left">
+                    <i class="fas fa-map-marked-alt text-primary-600 text-xl"></i>
+                    <span>Smart navigation & local guidance</span>
+                </div>
+                <div class="flex items-center space-x-3 text-left">
+                    <i class="fas fa-brain text-primary-600 text-xl"></i>
+                    <span>AI-powered cultural advice</span>
+                </div>
+                <div class="flex items-center space-x-3 text-left">
+                    <i class="fas fa-shield-alt text-primary-600 text-xl"></i>
+                    <span>Travel safely with confidence</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Auth Buttons -->
+    <div class="p-6 space-y-3">
+        <a href="{% url 'register' %}" class="block w-full bg-primary-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors">
+            Get Started
+        </a>
+        <a href="{% url 'login' %}" class="block w-full border border-primary-600 text-primary-600 text-center py-3 rounded-lg font-semibold hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors">
+            Sign In
+        </a>
+    </div>
+</div>
+{% endblock %}
