@@ -62,9 +62,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'safe_traveller.wsgi.application'
 
+import socket
+
+def force_ipv4(host):
+    if not host:
+        return host
+    try:
+        return socket.gethostbyname(host)
+    except socket.gaierror:
+        return host
+
+db_host = force_ipv4(os.getenv('POSTGRES_HOST'))
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=f"postgres://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}",
+        default=f"postgres://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{db_host}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}",
         conn_max_age=600,
         ssl_require=True
     )
