@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: safe-traveler-web
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn safe_traveller.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        value: ""
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ""
+      - key: POSTGRES_USER
+        value: ""
+      - key: POSTGRES_PASSWORD
+        value: ""
+      - key: POSTGRES_HOST
+        value: ""
+      - key: POSTGRES_PORT
+        value: ""
+      - key: POSTGRES_DB
+        value: ""
+      - key: GOOGLE_API_KEY
+        value: ""
+      - key: ELEVENLABS_API_KEY
+        value: ""
+      - key: SUPABASE_URL
+        value: ""
+      - key: SUPABASE_KEY
+        value: ""
+      - key: OPENWEATHER_API_KEY
+        value: ""

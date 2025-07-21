@@ -8,3 +8,5 @@ pyaudio==0.2.11
 pillow==10.2.0
 django-cors-headers==4.3.1
 whitenoise==6.6.0
+gunicorn==20.1.0
+psycopg2-binary==2.9.7
