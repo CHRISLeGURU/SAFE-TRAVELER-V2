@@ -4,9 +4,9 @@ google-generativeai==0.3.2
 requests
 supabase
 speechrecognition
-
 pillow
 django-cors-headers
 whitenoise
 gunicorn==20.1.0
 psycopg2-binary
+dj-database-url
