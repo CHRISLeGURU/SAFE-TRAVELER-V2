@@ -4,6 +4,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.templatetags.static import static as static_url
+from django.urls import path, include
+from safe_traveller.views import SWView
 
 def pwa_manifest(request):
     return JsonResponse({
@@ -18,13 +21,13 @@ def pwa_manifest(request):
         "scope": "/",
         "icons": [
             {
-                "src": "/static/images/icon-192.png",
+                "src": static_url("image/icon-192.png"),
                 "type": "image/png",
                 "sizes": "192x192",
                 "purpose": "any maskable"
             },
             {
-                "src": "/static/images/icon-512.png", 
+                "src": static_url("image/icon-512.png"),
                 "type": "image/png",
                 "sizes": "512x512",
                 "purpose": "any maskable"
@@ -40,6 +43,7 @@ urlpatterns = [
     path('map/', include('maps.urls')),
     path('translate/', include('translate.urls')),
     path('manifest.json', pwa_manifest, name='pwa_manifest'),
+    path('sw.js', SWView.as_view(), name='service-worker'),
 ]
 
 if settings.DEBUG:
