@@ -115,3 +115,216 @@ def refresh_advice(request, travel_id):
             })
     
     return JsonResponse({'status': 'error'})
+
+@login_required
+def travel_edit(request, travel_id):
+    travel = get_object_or_404(Travel, id=travel_id, user=request.user)
+    
+    if request.method == 'POST':
+        form = TravelForm(request.POST, instance=travel)
+        if form.is_valid():
+            updated_travel = form.save()
+            
+            # Regenerate advice if destination changed
+            if form.has_changed() and any(field in form.changed_data for field in ['city', 'country', 'travel_type']):
+                try:
+                    advice = generate_travel_advice(
+                        updated_travel.city, 
+                        updated_travel.country, 
+                        updated_travel.travel_type
+                    )
+                    updated_travel.advice_data = advice
+                    updated_travel.save()
+                except Exception as e:
+                    print(f"Error regenerating advice: {e}")
+            
+            messages.success(request, f'Travel "{updated_travel.name}" updated successfully!')
+            return redirect('travel_detail', travel_id=updated_travel.id)
+    else:
+        form = TravelForm(instance=travel)
+    
+    context = {
+        'form': form,
+        'travel': travel,
+        'is_editing': True,
+    }
+    return render(request, 'travels/travel_form.html', context)
+
+@login_required
+def travel_delete(request, travel_id):
+    travel = get_object_or_404(Travel, id=travel_id, user=request.user)
+    
+    if request.method == 'POST':
+        travel_name = travel.name
+        was_active = travel.is_active
+        
+        # If deleting active travel, suggest another one
+        next_travel = None
+        if was_active:
+            next_travel = Travel.objects.filter(
+                user=request.user
+            ).exclude(id=travel_id).first()
+            
+            if next_travel:
+                next_travel.is_active = True
+                next_travel.save()
+        
+        travel.delete()
+        
+        if was_active and next_travel:
+            messages.success(
+                request, 
+                f'Travel "{travel_name}" deleted. "{next_travel.name}" is now your active travel.'
+            )
+        else:
+            messages.success(request, f'Travel "{travel_name}" deleted successfully.')
+        
+        return redirect('travel_list')
+    
+    # Count related objects for confirmation
+    destinations_count = travel.quickdestination_set.count()
+    advice_count = travel.traveladvice_set.count()
+    
+    context = {
+        'travel': travel,
+        'destinations_count': destinations_count,
+        'advice_count': advice_count,
+    }
+    return render(request, 'travels/travel_delete.html', context)
+
+@login_required
+def travel_edit(request, travel_id):
+    travel = get_object_or_404(Travel, id=travel_id, user=request.user)
+    
+    if request.method == 'POST':
+        form = TravelForm(request.POST, instance=travel)
+        if form.is_valid():
+            updated_travel = form.save()
+            
+            # Regenerate AI advice if destination changed
+            if form.has_changed() and any(field in form.changed_data for field in ['city', 'country', 'travel_type']):
+                try:
+                    advice = generate_travel_advice(
+                        updated_travel.city, 
+                        updated_travel.country, 
+                        updated_travel.travel_type
+                    )
+                    updated_travel.advice_data = advice
+                    updated_travel.save()
+                except Exception as e:
+                    print(f"Error regenerating advice: {e}")
+            
+            messages.success(request, f'Travel "{updated_travel.name}" updated successfully!')
+            return redirect('travel_detail', travel_id=updated_travel.id)
+    else:
+        form = TravelForm(instance=travel)
+    
+    context = {
+        'form': form,
+        'travel': travel,
+        'is_edit': True,
+    }
+    return render(request, 'travels/travel_form.html', context)
+
+@login_required
+def travel_delete(request, travel_id):
+    travel = get_object_or_404(Travel, id=travel_id, user=request.user)
+    
+    if request.method == 'POST':
+        travel_name = travel.name
+        was_active = travel.is_active
+        
+        # Delete the travel (cascade will handle related objects)
+        travel.delete()
+        
+        # If deleted travel was active, suggest activating another one
+        if was_active:
+            next_travel = Travel.objects.filter(user=request.user).first()
+            if next_travel:
+                next_travel.is_active = True
+                next_travel.save()
+                messages.info(request, f'"{next_travel.name}" is now your active travel.')
+        
+        messages.success(request, f'Travel "{travel_name}" deleted successfully!')
+        return redirect('travel_list')
+    
+    context = {
+        'travel': travel,
+    }
+    return render(request, 'travels/travel_delete.html', context)
+
+@login_required
+def travel_edit(request, travel_id):
+    travel = get_object_or_404(Travel, id=travel_id, user=request.user)
+    
+    if request.method == 'POST':
+        form = TravelForm(request.POST, instance=travel)
+        if form.is_valid():
+            updated_travel = form.save()
+            
+            # Regenerate advice if destination changed
+            if form.has_changed() and any(field in form.changed_data for field in ['city', 'country', 'travel_type']):
+                try:
+                    advice = generate_travel_advice(
+                        updated_travel.city, 
+                        updated_travel.country, 
+                        updated_travel.travel_type
+                    )
+                    updated_travel.advice_data = advice
+                    updated_travel.save()
+                except Exception as e:
+                    print(f"Error regenerating advice: {e}")
+            
+            messages.success(request, f'Travel "{updated_travel.name}" updated successfully!')
+            return redirect('travel_detail', travel_id=updated_travel.id)
+    else:
+        form = TravelForm(instance=travel)
+    
+    context = {
+        'form': form,
+        'travel': travel,
+        'is_editing': True,
+    }
+    return render(request, 'travels/travel_form.html', context)
+
+@login_required
+def travel_delete(request, travel_id):
+    travel = get_object_or_404(Travel, id=travel_id, user=request.user)
+    
+    if request.method == 'POST':
+        travel_name = travel.name
+        was_active = travel.is_active
+        
+        # If deleting active travel, suggest another one to activate
+        next_travel = None
+        if was_active:
+            next_travel = Travel.objects.filter(
+                user=request.user
+            ).exclude(id=travel_id).first()
+        
+        # Delete the travel (cascade will handle related objects)
+        travel.delete()
+        
+        # Activate next travel if the deleted one was active
+        if was_active and next_travel:
+            next_travel.is_active = True
+            next_travel.save()
+            messages.success(
+                request, 
+                f'Travel "{travel_name}" deleted. "{next_travel.name}" is now your active travel.'
+            )
+        else:
+            messages.success(request, f'Travel "{travel_name}" deleted successfully.')
+        
+        return redirect('travel_list')
+    
+    # For GET request, show confirmation page
+    context = {
+        'travel': travel,
+        'related_count': {
+            'destinations': travel.quickdestination_set.count(),
+            'advice': travel.traveladvice_set.count(),
+            'weather': travel.weathersnapshot_set.count(),
+        }
+    }
+    return render(request, 'travels/travel_delete.html', context)

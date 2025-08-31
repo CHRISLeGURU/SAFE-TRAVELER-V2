@@ -78,6 +78,23 @@
                         Activate
                     </button>
                     {% endif %}
+                    
+                    <div class="relative">
+                        <button onclick="toggleTravelMenu({{ travel.id }})" 
+                                class="px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <div id="travel-menu-{{ travel.id }}" class="hidden absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 z-50">
+                            <a href="{% url 'travel_edit' travel.id %}" class="flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700">
+                                <i class="fas fa-edit mr-2 text-blue-500"></i>
+                                Edit
+                            </a>
+                            <a href="{% url 'travel_delete' travel.id %}" class="flex items-center px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-slate-700">
+                                <i class="fas fa-trash mr-2"></i>
+                                Delete
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
             {% endfor %}
@@ -112,5 +129,28 @@ function setActiveTravel(travelId) {
         }
     });
 }
+
+function toggleTravelMenu(travelId) {
+    const menu = document.getElementById(`travel-menu-${travelId}`);
+    
+    // Close all other menus
+    document.querySelectorAll('[id^="travel-menu-"]').forEach(m => {
+        if (m.id !== `travel-menu-${travelId}`) {
+            m.classList.add('hidden');
+        }
+    });
+    
+    menu.classList.toggle('hidden');
+}
+
+// Close menus when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('button') || !event.target.closest('button').onclick || 
+        event.target.closest('button').onclick.toString().indexOf('toggleTravelMenu') === -1) {
+        document.querySelectorAll('[id^="travel-menu-"]').forEach(menu => {
+            menu.classList.add('hidden');
+        });
+    }
+});
 </script>
 {% endblock %}

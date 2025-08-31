@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 
-{% block title %}New Travel - Safe Traveller{% endblock %}
+{% block title %}{% if is_editing %}Edit Travel{% else %}New Travel{% endif %} - Safe Traveller{% endblock %}
 
 {% block content %}
 <div class="max-w-md mx-auto">
     <!-- Header -->
     <header class="bg-white dark:bg-slate-800 p-4 shadow-sm theme-transition flex justify-between items-center">
-        <a href="{% url 'travel_list' %}" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+        <a href="{% if is_editing %}{% url 'travel_detail' travel.id %}{% else %}{% url 'travel_list' %}{% endif %}" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
             <i class="fas fa-arrow-left text-xl"></i>
         </a>
-        <h1 class="text-xl font-bold">New Travel</h1>
+        <h1 class="text-xl font-bold">{% if is_editing %}Edit Travel{% else %}New Travel{% endif %}</h1>
         <div></div>
     </header>
     
@@ -17,10 +17,16 @@
         <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm">
             <div class="text-center mb-6">
                 <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-compass text-white text-2xl"></i>
+                    <i class="fas fa-{% if is_editing %}edit{% else %}compass{% endif %} text-white text-2xl"></i>
                 </div>
-                <h2 class="text-xl font-bold mb-2">Plan Your Journey</h2>
-                <p class="text-gray-600 dark:text-gray-400 text-sm">Tell us about your travel plans to get personalized guidance</p>
+                <h2 class="text-xl font-bold mb-2">{% if is_editing %}Update Your Journey{% else %}Plan Your Journey{% endif %}</h2>
+                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                    {% if is_editing %}
+                        Modify your travel details and we'll update your personalized guidance
+                    {% else %}
+                        Tell us about your travel plans to get personalized guidance
+                    {% endif %}
+                </p>
             </div>
             
             <form method="post" class="space-y-4">
@@ -78,14 +84,18 @@
                 
                 <div class="pt-4">
                     <button type="submit" class="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition-colors">
-                        <i class="fas fa-rocket mr-2"></i>
-                        Create Travel Plan
+                        <i class="fas fa-{% if is_editing %}save{% else %}rocket{% endif %} mr-2"></i>
+                        {% if is_editing %}Update Travel Plan{% else %}Create Travel Plan{% endif %}
                     </button>
                 </div>
                 
                 <div class="text-center">
                     <p class="text-xs text-gray-500">
-                        We'll generate personalized cultural advice and safety tips for your destination
+                        {% if is_editing %}
+                            Changes to destination or travel type will regenerate AI advice
+                        {% else %}
+                            We'll generate personalized cultural advice and safety tips for your destination
+                        {% endif %}
                     </p>
                 </div>
             </form>

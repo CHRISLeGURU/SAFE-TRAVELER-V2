@@ -10,9 +10,26 @@
             <i class="fas fa-arrow-left text-xl"></i>
         </a>
         <h1 class="text-lg font-bold">{{ travel.name }}</h1>
-        <button onclick="refreshAdvice()" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
-            <i class="fas fa-sync text-xl"></i>
-        </button>
+        <div class="flex items-center space-x-2">
+            <button onclick="refreshAdvice()" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+                <i class="fas fa-sync text-xl"></i>
+            </button>
+            <div class="relative">
+                <button onclick="toggleMenu()" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-ellipsis-v text-xl"></i>
+                </button>
+                <div id="action-menu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 z-50">
+                    <a href="{% url 'travel_edit' travel.id %}" class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700">
+                        <i class="fas fa-edit mr-3 text-blue-500"></i>
+                        Edit Travel
+                    </a>
+                    <a href="{% url 'travel_delete' travel.id %}" class="flex items-center px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-slate-700">
+                        <i class="fas fa-trash mr-3"></i>
+                        Delete Travel
+                    </a>
+                </div>
+            </div>
+        </div>
     </header>
     
     <div class="p-4 space-y-6">
@@ -211,6 +228,21 @@ function refreshAdvice() {
         }
     });
 }
+
+function toggleMenu() {
+    const menu = document.getElementById('action-menu');
+    menu.classList.toggle('hidden');
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', function(event) {
+    const menu = document.getElementById('action-menu');
+    const button = event.target.closest('button');
+    
+    if (!button || !button.onclick || button.onclick.toString().indexOf('toggleMenu') === -1) {
+        menu.classList.add('hidden');
+    }
+});
 
 function shareTravel() {
     if (navigator.share) {

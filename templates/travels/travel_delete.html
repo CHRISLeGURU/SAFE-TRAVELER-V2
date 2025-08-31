@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Travel - Safe Traveller{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 p-4 shadow-sm theme-transition flex justify-between items-center">
+        <a href="{% url 'travel_detail' travel.id %}" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+            <i class="fas fa-arrow-left text-xl"></i>
+        </a>
+        <h1 class="text-xl font-bold text-red-600">Delete Travel</h1>
+        <div></div>
+    </header>
+    
+    <div class="p-4">
+        <!-- Warning Card -->
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 mb-6">
+            <div class="text-center mb-4">
+                <div class="w-16 h-16 bg-red-100 dark:bg-red-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-red-800 dark:text-red-300 mb-2">Confirm Deletion</h2>
+                <p class="text-red-700 dark:text-red-400 text-sm">This action cannot be undone</p>
+            </div>
+        </div>
+        
+        <!-- Travel Info -->
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm mb-6">
+            <h3 class="font-semibold text-lg mb-4">Travel to Delete</h3>
+            
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-400">Name:</span>
+                    <span class="font-medium">{{ travel.name }}</span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-400">Destination:</span>
+                    <span class="font-medium">{{ travel.city }}, {{ travel.country }}</span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-400">Type:</span>
+                    <span class="font-medium">{{ travel.get_travel_type_display }}</span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-400">Started:</span>
+                    <span class="font-medium">{{ travel.start_date|date:"M d, Y" }}</span>
+                </div>
+                
+                {% if travel.is_active %}
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-400">Status:</span>
+                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                        Active Travel
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Impact Warning -->
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 mb-6">
+            <h4 class="font-semibold text-yellow-800 dark:text-yellow-300 mb-2">
+                <i class="fas fa-info-circle mr-2"></i>
+                What will be deleted:
+            </h4>
+            
+            <ul class="text-sm text-yellow-700 dark:text-yellow-400 space-y-1">
+                <li>• All travel information and settings</li>
+                {% if destinations_count > 0 %}
+                <li>• {{ destinations_count }} saved destination{{ destinations_count|pluralize }}</li>
+                {% endif %}
+                {% if advice_count > 0 %}
+                <li>• {{ advice_count }} AI-generated advice{{ advice_count|pluralize }}</li>
+                {% endif %}
+                <li>• Weather history and snapshots</li>
+                <li>• All associated data and preferences</li>
+            </ul>
+            
+            {% if travel.is_active %}
+            <div class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p class="text-sm text-blue-800 dark:text-blue-300">
+                    <i class="fas fa-lightbulb mr-1"></i>
+                    Since this is your active travel, we'll automatically activate another travel if available.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Confirmation Form -->
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            <div class="bg-gray-50 dark:bg-slate-700 rounded-lg p-4">
+                <label class="flex items-center space-x-3">
+                    <input type="checkbox" id="confirm-delete" required 
+                           class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                        I understand that this action is permanent and cannot be undone
+                    </span>
+                </label>
+            </div>
+            
+            <div class="flex space-x-3">
+                <a href="{% url 'travel_detail' travel.id %}" 
+                   class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-3 rounded-lg text-center font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancel
+                </a>
+                
+                <button type="submit" id="delete-btn" disabled
+                        class="flex-1 bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    <i class="fas fa-trash mr-2"></i>
+                    Delete Travel
+                </button>
+            </div>
+        </form>
+        
+        <!-- Alternative Actions -->
+        <div class="mt-6 text-center">
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Not sure about deleting? You can also:
+            </p>
+            
+            <div class="flex space-x-2">
+                <a href="{% url 'travel_edit' travel.id %}" 
+                   class="flex-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 py-2 rounded-lg text-center text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/30">
+                    <i class="fas fa-edit mr-1"></i>
+                    Edit Instead
+                </a>
+                
+                {% if travel.is_active %}
+                <button onclick="deactivateTravel()" 
+                        class="flex-1 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 py-2 rounded-lg text-center text-sm font-medium hover:bg-orange-100 dark:hover:bg-orange-900/30">
+                    <i class="fas fa-pause mr-1"></i>
+                    Deactivate Only
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Enable delete button only when checkbox is checked
+document.getElementById('confirm-delete').addEventListener('change', function() {
+    const deleteBtn = document.getElementById('delete-btn');
+    deleteBtn.disabled = !this.checked;
+});
+
+// Deactivate travel function
+function deactivateTravel() {
+    if (confirm('Deactivate this travel? You can reactivate it later.')) {
+        fetch('{% url "set_active_travel" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({travel_id: null})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.href = '{% url "travel_list" %}';
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
