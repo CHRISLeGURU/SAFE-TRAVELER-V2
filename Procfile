@@ -1,1 +1,1 @@
-web: gunicorn safe_traveller.wsgi
+web: gunicorn safe_traveller.wsgi --log-file -
